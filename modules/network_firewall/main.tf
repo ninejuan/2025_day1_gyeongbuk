@@ -54,36 +54,37 @@ resource "aws_networkfirewall_rule_group" "block_ifconfig_me" {
   }
 }
 
-# VPC Endpoint for Network Firewall - AZ A
-resource "aws_vpc_endpoint" "network_firewall_az_a" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.vpce.${data.aws_region.current.name}.vpce-svc-${aws_networkfirewall_firewall.main.id}"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = [var.inspection_subnet_ids[0]]
-
-  private_dns_enabled = true
-
-  tags = {
-    Name = "skills-network-firewall-endpoint-az-a"
-  }
-}
-
-# VPC Endpoint for Network Firewall - AZ B
-resource "aws_vpc_endpoint" "network_firewall_az_b" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.vpce.${data.aws_region.current.name}.vpce-svc-${aws_networkfirewall_firewall.main.id}"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = [var.inspection_subnet_ids[1]]
-
-  private_dns_enabled = true
-
-  tags = {
-    Name = "skills-network-firewall-endpoint-az-b"
-  }
-}
-
 # Data source for current region
 data "aws_region" "current" {}
+
+# Data source for Network Firewall auto-generated VPC Endpoints
+data "aws_vpc_endpoint" "network_firewall_az_a" {
+  vpc_id = var.vpc_id
+
+  filter {
+    name   = "vpc-endpoint-type"
+    values = ["GatewayLoadBalancer"]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = ["*skills-firewall*ap-northeast-2a*"]
+  }
+}
+
+data "aws_vpc_endpoint" "network_firewall_az_b" {
+  vpc_id = var.vpc_id
+
+  filter {
+    name   = "vpc-endpoint-type"
+    values = ["GatewayLoadBalancer"]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = ["*skills-firewall*ap-northeast-2b*"]
+  }
+}
 
 # Route table for inspection subnets (Network Firewall)
 resource "aws_route_table" "inspection" {
@@ -111,10 +112,10 @@ resource "aws_route_table_association" "inspection" {
 resource "aws_route_table" "public_az_a" {
   vpc_id = var.vpc_id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_a.id
-  }
+  # route {
+  #   cidr_block = "0.0.0.0/0"
+  #   vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_a.id
+  # }
 
   tags = {
     Name = "${var.firewall_name}-public-az-a-rt"
@@ -125,10 +126,10 @@ resource "aws_route_table" "public_az_a" {
 resource "aws_route_table" "public_az_b" {
   vpc_id = var.vpc_id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_b.id
-  }
+  # route {
+  #   cidr_block = "0.0.0.0/0"
+  #   vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_b.id
+  # }
 
   tags = {
     Name = "${var.firewall_name}-public-az-b-rt"
@@ -146,16 +147,64 @@ resource "aws_route_table_association" "public_az_b" {
   route_table_id = aws_route_table.public_az_b.id
 }
 
+# Route for public AZ A to Network Firewall VPC Endpoint (Auto-generated)
+resource "aws_route" "public_az_a_to_firewall" {
+  route_table_id         = aws_route_table.public_az_a.id
+  destination_cidr_block = "0.0.0.0/0"
+  vpc_endpoint_id        = data.aws_vpc_endpoint.network_firewall_az_a.id
+
+  depends_on = [aws_route_table_association.public_az_a, data.aws_vpc_endpoint.network_firewall_az_a]
+}
+
+# Route for public AZ B to Network Firewall VPC Endpoint (Auto-generated)
+resource "aws_route" "public_az_b_to_firewall" {
+  route_table_id         = aws_route_table.public_az_b.id
+  destination_cidr_block = "0.0.0.0/0"
+  vpc_endpoint_id        = data.aws_vpc_endpoint.network_firewall_az_b.id
+
+  depends_on = [aws_route_table_association.public_az_b, data.aws_vpc_endpoint.network_firewall_az_b]
+}
+
 # IGW Route Table for edge connection
 resource "aws_route_table" "igw" {
   vpc_id = var.vpc_id
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = var.internet_gateway_id
-  }
+
+  # route {
+  #   cidr_block = "10.0.0.0/24"
+  #   vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_a.id
+  # } 
+
+  # route {
+  #   cidr_block = "10.0.1.0/24"
+  #   vpc_endpoint_id = aws_vpc_endpoint.network_firewall_az_b.id
+  # }
 
   tags = {
     Name = "${var.firewall_name}-igw-rt"
   }
+}
+
+resource "aws_route" "igw_to_firewall_common" {
+  route_table_id         = aws_route_table.igw.id
+  destination_cidr_block = "0.0.0.0/0" # Or a more specific CIDR for inbound traffic
+  gateway_id = var.internet_gateway_id
+}
+
+# Route for IGW to Network Firewall VPC Endpoint AZ A (Auto-generated)
+resource "aws_route" "igw_to_firewall_az_a" {
+  route_table_id         = aws_route_table.igw.id
+  destination_cidr_block = "10.0.0.0/24"
+  vpc_endpoint_id        = data.aws_vpc_endpoint.network_firewall_az_a.id
+
+  depends_on = [aws_networkfirewall_firewall.main, data.aws_vpc_endpoint.network_firewall_az_a]
+}
+
+# Route for IGW to Network Firewall VPC Endpoint AZ B (Auto-generated)
+resource "aws_route" "igw_to_firewall_az_b" {
+  route_table_id         = aws_route_table.igw.id
+  destination_cidr_block = "10.0.1.0/24"
+  vpc_endpoint_id        = data.aws_vpc_endpoint.network_firewall_az_b.id
+
+  depends_on = [aws_networkfirewall_firewall.main, data.aws_vpc_endpoint.network_firewall_az_b]
 } 

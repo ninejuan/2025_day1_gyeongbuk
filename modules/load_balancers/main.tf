@@ -173,24 +173,10 @@ resource "aws_vpc_endpoint" "nlb" {
   vpc_endpoint_type = "Interface"
   subnet_ids        = var.hub_public_subnet_ids
 
-  private_dns_enabled = true
+  private_dns_enabled = false
 
   tags = {
     Name = "skills-nlb-endpoint"
-  }
-}
-
-# VPC Endpoint for Internal NLB (Private Link)
-resource "aws_vpc_endpoint" "internal_nlb" {
-  vpc_id            = var.app_vpc_id
-  service_name      = "com.amazonaws.vpce.${data.aws_region.current.name}.vpce-svc-${aws_vpc_endpoint_service.internal_nlb.id}"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.app_workload_subnet_ids
-
-  private_dns_enabled = true
-
-  tags = {
-    Name = "skills-internal-nlb-endpoint"
   }
 }
 
@@ -202,6 +188,22 @@ resource "aws_vpc_endpoint_service" "internal_nlb" {
   tags = {
     Name = "skills-internal-nlb-service"
   }
+}
+
+# VPC Endpoint for Internal NLB (Private Link)
+resource "aws_vpc_endpoint" "internal_nlb" {
+  vpc_id            = var.app_vpc_id
+  service_name      = aws_vpc_endpoint_service.internal_nlb.service_name
+  vpc_endpoint_type = "Interface"
+  subnet_ids        = var.app_workload_subnet_ids
+
+  private_dns_enabled = false
+
+  tags = {
+    Name = "skills-internal-nlb-endpoint"
+  }
+
+  depends_on = [aws_vpc_endpoint_service.internal_nlb]
 }
 
 # Security Group for ALB

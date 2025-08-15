@@ -129,12 +129,13 @@ resource "aws_route_table" "private" {
 }
 
 # Route Table Associations
-resource "aws_route_table_association" "public" {
-  for_each = aws_subnet.public
-
-  subnet_id      = each.value.id
-  route_table_id = aws_route_table.public.id
-}
+# resource "aws_route_table_association" "public" {
+#   for_each = aws_subnet.public
+#
+#   subnet_id      = each.value.id
+#   route_table_id = aws_route_table.public.id
+# }
+# Public subnet associations are managed by Network Firewall module
 
 resource "aws_route_table_association" "workload" {
   for_each = var.workload_subnets != null ? aws_subnet.workload : {}
