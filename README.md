@@ -2,6 +2,45 @@
 
 이 프로젝트는 AWS 기반의 완전한 클라우드 인프라를 Terraform을 사용하여 자동화합니다.
 
+## 기능경기대회 체크리스트
+
+### TAA 이후
+- [ ] Firewall Routing 세팅 (세팅1참고)
+- [ ] EKS Cluster 접근은 private으로 전환. no public.
+- [ ] Bastion에 EIP 주고 repo 넣은 후, 내부 파일들 과제지 지시대로 배치
+- [ ] EKS에 Fluentd, ArgoCD 적용
+- [ ] Image들 **v1.0.0** 태그로 ECR Push
+- [ ] Github에 values push, s3에 app chart 업로드
+- [ ] Argo App 실행
+
+### App 배포 전
+- [ ] helm chart의 version과 argo app의 target Revision이 일치하는지 확인.
+- [ ] helm 배포 전 index 넣어주면 좋음. (세팅2참고)
+
+### 채점 전 체크리스트
+- [ ] VPC Endpoint에서 vpce-svc가 3개인지 확인.
+- [ ] EKS Cluster가 Private 모드인지 확인.
+- [ ] Bastion에서 ifconfig.me가 timeout 되는지 확인.
+- [ ] Bastion에 **EIP**를 줬는지 확인.
+- [ ] S3, ec2-user 디렉토리에 과제지에서 명시한 파일이 적절하게 위치해있는지 확인.
+- [ ] ELB가 잘 구성되었는지 확인. 만약 이상하다면, 비상 ingress 사용해서 어떻게든 되게 만들어야 함.
+- [ ] OpenSearch index-pattern이 app-log이고, 템플릿대로 로그 수집하는지, health는 안 받아오는지 확인해야 함.
+- [ ] Container Insights가 정상인지 확인해야 함. -> CW에서 대시보드 확인.
+
+## 세팅
+
+### (세팅1) Firewall Route 설정하기
+- 1. igw RTB 생성
+   - (igw-rtb) edge 연결로 igw 잡고, hub public subnet들의 cidr 값과 firewall vpce 매핑
+   - (firewall-rtb) 0.0.0.0/0 - igw conn
+   - (pub-rtb 2개 모두) 0.0.0.0/0을 AZ에 맞는 firewall vpce와 연동.
+
+### (세팅2) Helm chart index 생성
+```sh
+helm repo index . --url s3://skills-chart-bucket-<4words>/app
+aws s3 cp index.yaml s3://skills-chart-bucket-<4words>/app/
+```
+
 ## 🏗️ 아키텍처 구성
 
 ### 3. VPC 구성
@@ -229,10 +268,6 @@ kubectl get namespaces
 2. **Helm Chart 생성 및 배포**
 3. **애플리케이션 배포**
 4. **CI/CD 파이프라인 구성**
-
-## 📝 라이센스
-
-이 프로젝트는 교육 목적으로 제작되었습니다.
 
 짜야될 파일들
 - App Dockerfile (green/red) -> ecr

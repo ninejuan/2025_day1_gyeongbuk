@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: skills
+  labels:
+    app: fluentd
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      serviceAccountName: fluentd-sa
+      containers:
+        - name: fluentd
+          image: fluent/fluentd:v1.16-debian-1
+          env:
+            - name: OPENSEARCH_HOST
+              value: "skills-opensearch"
+            - name: OPENSEARCH_PORT
+              value: "9200"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/app
+            - name: config-volume
+              mountPath: /fluentd/etc
+          ports:
+            - containerPort: 24224
+              name: forward
+      volumes:
+        - name: log-volume
+          hostPath:
+            path: /var/log/app
+            type: DirectoryOrCreate
+        - name: config-volume
+          configMap:
+            name: fluentd-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: skills
+data:
+  fluent.conf: |
+    <source>
+      @type forward
+      port 24224
+      bind 0.0.0.0
+    </source>
+
+    <match app.**>
+      @type elasticsearch
+      host "#{ENV['OPENSEARCH_HOST']}"
+      port "#{ENV['OPENSEARCH_PORT']}"
+      logstash_format true
+      include_tag_key true
+      index_name app-log
+      type_name _doc
+    </match>

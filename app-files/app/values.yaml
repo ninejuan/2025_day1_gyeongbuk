@@ -11,3 +11,5 @@ fluentbit:
   enabled: true
   image: fluent/fluent-bit:2.2
   port: 24224
+  opensearchHost: skills-opensearch
+  opensearchPort: 9200
