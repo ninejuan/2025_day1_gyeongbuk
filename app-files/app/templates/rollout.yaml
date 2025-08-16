@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    blueGreen:
+      activeService: {{ include "app.fullname" . }}-active
+      previewService: {{ include "app.fullname" . }}-preview
+  selector:
+    matchLabels:
+      app: {{ include "app.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "app.name" . }}
+    spec:
+      containers:
+        - name: {{ include "app.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: skills-secrets
+                  key: DB_USER
+            - name: DB_PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: skills-secrets
+                  key: DB_PASSWD
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: skills-secrets
+                  key: DB_URL
+      {{- if .Values.fluentbit.enabled }}
+        - name: fluent-bit
+          image: "{{ .Values.fluentbit.image }}"
+          ports:
+            - containerPort: {{ .Values.fluentbit.port }}
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log/app
+      {{- end }}
+      volumes:
+        - name: varlog
+          emptyDir: {}

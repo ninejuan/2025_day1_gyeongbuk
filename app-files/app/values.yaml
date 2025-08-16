@@ -1,0 +1,13 @@
+replicaCount: 1
+image:
+  repository: "<your-ecr-repo>"
+  tag: "v1.0.0"
+service:
+  type: ClusterIP
+  port: 80
+rollout:
+  strategy: blueGreen
+fluentbit:
+  enabled: true
+  image: fluent/fluent-bit:2.2
+  port: 24224

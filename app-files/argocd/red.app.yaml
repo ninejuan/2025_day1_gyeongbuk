@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: green
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: app
+    repoURL: s3://skills-chart-bucket-<4words>/app
+    targetRevision: 1.0.0
+    helm:
+      valueFiles:
+        - https://raw.githubusercontent.com/<yourid>/day1-values/main/red.values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: skills
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

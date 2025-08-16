@@ -233,3 +233,11 @@ kubectl get namespaces
 ## 📝 라이센스
 
 이 프로젝트는 교육 목적으로 제작되었습니다.
+
+짜야될 파일들
+- App Dockerfile (green/red) -> ecr
+- App Helm Chart (green/red) -> s3
+   - fluent series
+   - aws secrets (w. rbac)
+   - argo rollout
+- argocd app

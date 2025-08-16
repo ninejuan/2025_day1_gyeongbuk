@@ -30,6 +30,32 @@ resource "aws_eks_cluster" "main" {
   }
 }
 
+# Container Insights Addon
+resource "aws_eks_addon" "container_insights" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "amazon-cloudwatch-observability"
+
+  addon_version = "v1.0.0-eksbuild.1"
+
+  configuration_values = jsonencode({
+    "cloudWatchAgent" = {
+      "enabled" = true
+    }
+    "containerInsights" = {
+      "enabled" = true
+    }
+  })
+
+  depends_on = [
+    aws_eks_node_group.app,
+    aws_eks_node_group.addon
+  ]
+
+  tags = {
+    Name = "${var.cluster_name}-container-insights"
+  }
+}
+
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster" {
   name = "${var.cluster_name}-cluster-role"
