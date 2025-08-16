@@ -3,5 +3,5 @@
 {{- end -}}
 
 {{- define "app.fullname" -}}
-{{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-deploy" .Release.Name -}}
 {{- end -}}
