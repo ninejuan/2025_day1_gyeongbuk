@@ -5,8 +5,11 @@ image:
 service:
   type: ClusterIP
   port: 80
-rollout:
-  strategy: blueGreen
+ingress:
+  enabled: true
+  host: ""
+  certificateArn: ""
+  groupName: "default"
 fluentbit:
   enabled: true
   image: fluent/fluent-bit:2.2

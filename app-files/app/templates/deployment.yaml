@@ -1,14 +1,10 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: {{ include "app.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  strategy:
-    blueGreen:
-      activeService: {{ include "app.fullname" . }}-active
-      previewService: {{ include "app.fullname" . }}-preview
   selector:
     matchLabels:
       app: {{ include "app.name" . }}
