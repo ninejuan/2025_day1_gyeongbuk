@@ -34,10 +34,6 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# SSH keys
-modules/bastion/ssh/skills-bastion-key
-modules/bastion/ssh/skills-bastion-key.pub
-
 # IDE files
 .vscode/
 .idea/
