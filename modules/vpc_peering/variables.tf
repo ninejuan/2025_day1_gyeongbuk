@@ -18,14 +18,14 @@ variable "app_vpc_cidr" {
   type        = string
 }
 
-variable "hub_route_table_id" {
-  description = "Hub VPC route table ID"
-  type        = string
+variable "hub_route_table_ids" {
+  description = "Hub VPC route table IDs"
+  type        = list(string)
 }
 
-variable "app_route_table_id" {
-  description = "Application VPC route table ID"
-  type        = string
+variable "app_route_table_ids" {
+  description = "Application VPC route table IDs"
+  type        = list(string)
 }
 
 variable "peering_name" {

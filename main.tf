@@ -99,8 +99,15 @@ module "vpc_peering" {
   hub_vpc_cidr = module.hub_vpc.vpc_cidr
   app_vpc_cidr = module.app_vpc.vpc_cidr
   
-  hub_route_table_id = module.hub_vpc.public_route_table_id
-  app_route_table_id = module.app_vpc.private_route_table_id
+  hub_route_table_ids = [
+    module.hub_vpc.inspection_route_table_id,
+    module.hub_vpc.public_az_a_route_table_id,
+    module.hub_vpc.public_az_b_route_table_id
+  ]
+  app_route_table_ids = [
+    module.app_vpc.public_route_table_id,
+    module.app_vpc.private_route_table_id
+  ]
   
   peering_name = "skills-peering"
   
@@ -205,6 +212,18 @@ module "ecr" {
   project     = var.project
 }
 
+# VPC Endpoints for App VPC
+module "vpc_endpoints" {
+  source = "./modules/vpc_endpoints"
+
+  vpc_id = module.app_vpc.vpc_id
+  subnet_ids = module.app_vpc.workload_subnet_ids
+  
+  project = var.project
+  
+  depends_on = [module.eks]
+}
+
 # EKS Cluster
 module "eks" {
   source = "./modules/eks"
@@ -228,22 +247,10 @@ module "eks" {
   environment = var.environment
   project     = var.project
 
-  depends_on = [module.app_vpc_endpoints]
+
 }
 
-# VPC Endpoints for Application VPC
-module "app_vpc_endpoints" {
-  source = "./modules/vpc_endpoints"
 
-  vpc_id = module.app_vpc.vpc_id
-  vpc_name = "skills-app-vpc"
-  subnet_ids = module.app_vpc.workload_subnet_ids
-  route_table_ids = [module.app_vpc.private_route_table_id]
-  allowed_security_group_ids = [] # Will be updated after EKS creation
-  
-  environment = var.environment
-  project     = var.project
-}
 
 # Load Balancers
 module "load_balancers" {
@@ -258,7 +265,7 @@ module "load_balancers" {
   environment = var.environment
   project     = var.project
   
-  depends_on = [module.eks, module.app_vpc_endpoints]
+  depends_on = [module.eks, module.vpc_endpoints]
 }
 
 # OpenSearch

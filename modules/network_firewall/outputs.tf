@@ -13,17 +13,4 @@ output "policy_arn" {
   value       = aws_networkfirewall_firewall_policy.main.arn
 }
 
-output "public_az_a_route_table_id" {
-  description = "Public AZ-a Route Table ID"
-  value       = aws_route_table.public_az_a.id
-}
-
-output "public_az_b_route_table_id" {
-  description = "Public AZ-b Route Table ID"
-  value       = aws_route_table.public_az_b.id
-}
-
-output "igw_route_table_id" {
-  description = "IGW Route Table ID"
-  value       = aws_route_table.igw.id
-} 
+ 

@@ -35,10 +35,25 @@ output "internet_gateway_id" {
 
 output "public_route_table_id" {
   description = "Public route table ID"
-  value       = aws_route_table.public.id
+  value       = var.inspection_subnets == null ? aws_route_table.public[0].id : null
+}
+
+output "inspection_route_table_id" {
+  description = "Inspection route table ID"
+  value       = var.inspection_subnets != null ? aws_route_table.inspection[0].id : null
 }
 
 output "private_route_table_id" {
   description = "Private route table ID"
-  value       = aws_route_table.private.id
+  value       = var.create_nat_gateway ? aws_route_table.private[0].id : null
+}
+
+output "public_az_a_route_table_id" {
+  description = "Public AZ A route table ID"
+  value       = var.inspection_subnets != null ? aws_route_table.public_az_a[0].id : null
+}
+
+output "public_az_b_route_table_id" {
+  description = "Public AZ B route table ID"
+  value       = var.inspection_subnets != null ? aws_route_table.public_az_b[0].id : null
 } 

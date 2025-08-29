@@ -1,87 +1,70 @@
+# VPC Endpoints for ECR and S3 access
+
 # S3 VPC Endpoint
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = var.vpc_id
   service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
-  vpc_endpoint_type = "Gateway"
-  route_table_ids = var.route_table_ids
 
   tags = {
-    Name = "${var.vpc_name}-s3-endpoint"
+    Name = "${var.project}-s3-endpoint"
   }
 }
 
 # ECR API VPC Endpoint
 resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.subnet_ids
-
+  vpc_id              = var.vpc_id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.subnet_ids
   private_dns_enabled = true
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = {
-    Name = "${var.vpc_name}-ecr-api-endpoint"
+    Name = "${var.project}-ecr-api-endpoint"
   }
 }
 
 # ECR DKR VPC Endpoint
 resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.subnet_ids
-
+  vpc_id              = var.vpc_id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.subnet_ids
   private_dns_enabled = true
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = {
-    Name = "${var.vpc_name}-ecr-dkr-endpoint"
+    Name = "${var.project}-ecr-dkr-endpoint"
   }
 }
 
-
-
-# EKS VPC Endpoint
-resource "aws_vpc_endpoint" "eks" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.eks"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.subnet_ids
-
+# CloudWatch Logs VPC Endpoint
+resource "aws_vpc_endpoint" "logs" {
+  vpc_id              = var.vpc_id
+  service_name        = "com.amazonaws.${data.aws_region.current.name}.logs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = var.subnet_ids
   private_dns_enabled = true
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = {
-    Name = "${var.vpc_name}-eks-endpoint"
-  }
-}
-
-# Secrets Manager VPC Endpoint
-resource "aws_vpc_endpoint" "secretsmanager" {
-  vpc_id            = var.vpc_id
-  service_name      = "com.amazonaws.${data.aws_region.current.name}.secretsmanager"
-  vpc_endpoint_type = "Interface"
-  subnet_ids        = var.subnet_ids
-
-  private_dns_enabled = true
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
-
-  tags = {
-    Name = "${var.vpc_name}-secretsmanager-endpoint"
+    Name = "${var.project}-logs-endpoint"
   }
 }
 
 # Security Group for VPC Endpoints
 resource "aws_security_group" "vpc_endpoints" {
-  name_prefix = "${var.vpc_name}-vpc-endpoints-sg"
+  name_prefix = "${var.project}-vpc-endpoints-"
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["192.168.0.0/16"] # App VPC CIDR
   }
 
   egress {
@@ -92,7 +75,7 @@ resource "aws_security_group" "vpc_endpoints" {
   }
 
   tags = {
-    Name = "${var.vpc_name}-vpc-endpoints-sg"
+    Name = "${var.project}-vpc-endpoints-sg"
   }
 }
 

@@ -99,7 +99,9 @@ resource "aws_subnet" "db" {
 }
 
 # Route Tables
+# App VPC용 기본 public 라우트 테이블 (Hub VPC에서는 사용 안함)
 resource "aws_route_table" "public" {
+  count = var.inspection_subnets == null ? 1 : 0
   vpc_id = aws_vpc.main.id
 
   route {
@@ -112,15 +114,29 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table" "private" {
+# Hub VPC: Inspection subnet route table (IGW로 라우팅)
+resource "aws_route_table" "inspection" {
+  count = var.inspection_subnets != null ? 1 : 0
   vpc_id = aws_vpc.main.id
 
-  dynamic "route" {
-    for_each = var.create_nat_gateway ? [1] : []
-    content {
-      cidr_block     = "0.0.0.0/0"
-      nat_gateway_id = aws_nat_gateway.main[0].id
-    }
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name = "${var.vpc_name}-inspection-rt"
+  }
+}
+
+# App VPC: Workload/DB subnet route table (NAT로 라우팅)
+resource "aws_route_table" "private" {
+  count = var.create_nat_gateway ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main[0].id
   }
 
   tags = {
@@ -128,27 +144,71 @@ resource "aws_route_table" "private" {
   }
 }
 
-# Route Table Associations
-# resource "aws_route_table_association" "public" {
-#   for_each = aws_subnet.public
-#
-#   subnet_id      = each.value.id
-#   route_table_id = aws_route_table.public.id
-# }
-# Public subnet associations are managed by Network Firewall module
+# Hub VPC: Public subnet AZ별 라우트 테이블 (수동 연결용)
+resource "aws_route_table" "public_az_a" {
+  count = var.inspection_subnets != null ? 1 : 0
+  vpc_id = aws_vpc.main.id
 
-resource "aws_route_table_association" "workload" {
-  for_each = var.workload_subnets != null ? aws_subnet.workload : {}
-
-  subnet_id      = each.value.id
-  route_table_id = aws_route_table.private.id
+  tags = {
+    Name = "${var.vpc_name}-public-az-a-rt"
+  }
 }
 
-resource "aws_route_table_association" "db" {
-  for_each = var.db_subnets != null ? aws_subnet.db : {}
+resource "aws_route_table" "public_az_b" {
+  count = var.inspection_subnets != null ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.vpc_name}-public-az-b-rt"
+  }
+}
+
+# Route Table Associations
+# App VPC: Public subnets -> IGW
+resource "aws_route_table_association" "public" {
+  for_each = var.inspection_subnets == null ? aws_subnet.public : {}
 
   subnet_id      = each.value.id
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.public[0].id
+}
+
+# Hub VPC: Public subnets -> AZ별 라우트 테이블 (Network Firewall에서 관리)
+resource "aws_route_table_association" "public_az_a" {
+  for_each = var.inspection_subnets != null ? { "skills-hub-subnet-a" = aws_subnet.public["skills-hub-subnet-a"] } : {}
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.public_az_a[0].id
+}
+
+resource "aws_route_table_association" "public_az_b" {
+  for_each = var.inspection_subnets != null ? { "skills-hub-subnet-b" = aws_subnet.public["skills-hub-subnet-b"] } : {}
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.public_az_b[0].id
+}
+
+# Hub VPC: Inspection subnets -> IGW
+resource "aws_route_table_association" "inspection" {
+  for_each = var.inspection_subnets != null ? aws_subnet.inspection : {}
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.inspection[0].id
+}
+
+# App VPC: Workload subnets -> NAT
+resource "aws_route_table_association" "workload" {
+  for_each = var.workload_subnets != null && var.create_nat_gateway ? aws_subnet.workload : {}
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.private[0].id
+}
+
+# App VPC: DB subnets -> NAT
+resource "aws_route_table_association" "db" {
+  for_each = var.db_subnets != null && var.create_nat_gateway ? aws_subnet.db : {}
+
+  subnet_id      = each.value.id
+  route_table_id = aws_route_table.private[0].id
 }
 
 # Data sources

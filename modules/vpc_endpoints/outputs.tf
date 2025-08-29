@@ -1,29 +1,24 @@
 output "s3_endpoint_id" {
-  description = "S3 VPC endpoint ID"
+  description = "S3 VPC Endpoint ID"
   value       = aws_vpc_endpoint.s3.id
 }
 
 output "ecr_api_endpoint_id" {
-  description = "ECR API VPC endpoint ID"
+  description = "ECR API VPC Endpoint ID"
   value       = aws_vpc_endpoint.ecr_api.id
 }
 
 output "ecr_dkr_endpoint_id" {
-  description = "ECR DKR VPC endpoint ID"
+  description = "ECR DKR VPC Endpoint ID"
   value       = aws_vpc_endpoint.ecr_dkr.id
 }
 
-output "eks_endpoint_id" {
-  description = "EKS VPC endpoint ID"
-  value       = aws_vpc_endpoint.eks.id
+output "logs_endpoint_id" {
+  description = "CloudWatch Logs VPC Endpoint ID"
+  value       = aws_vpc_endpoint.logs.id
 }
 
-output "secretsmanager_endpoint_id" {
-  description = "Secrets Manager VPC endpoint ID"
-  value       = aws_vpc_endpoint.secretsmanager.id
-}
-
-output "security_group_id" {
-  description = "VPC endpoints security group ID"
+output "vpc_endpoints_security_group_id" {
+  description = "VPC Endpoints Security Group ID"
   value       = aws_security_group.vpc_endpoints.id
 } 

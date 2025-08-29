@@ -11,14 +11,18 @@ resource "aws_vpc_peering_connection" "main" {
 
 # Route table for Hub VPC to App VPC
 resource "aws_route" "hub_to_app" {
-  route_table_id            = var.hub_route_table_id
+  count = length(var.hub_route_table_ids)
+
+  route_table_id            = var.hub_route_table_ids[count.index]
   destination_cidr_block    = var.app_vpc_cidr
   vpc_peering_connection_id = aws_vpc_peering_connection.main.id
 }
 
 # Route table for App VPC to Hub VPC
 resource "aws_route" "app_to_hub" {
-  route_table_id            = var.app_route_table_id
+  count = length(var.app_route_table_ids)
+
+  route_table_id            = var.app_route_table_ids[count.index]
   destination_cidr_block    = var.hub_vpc_cidr
   vpc_peering_connection_id = aws_vpc_peering_connection.main.id
 } 
