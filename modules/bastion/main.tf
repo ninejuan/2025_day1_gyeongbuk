@@ -62,6 +62,15 @@ resource "aws_iam_instance_profile" "bastion" {
   role = aws_iam_role.bastion.name
 }
 
+# Elastic IP for Bastion
+resource "aws_eip" "bastion" {
+  domain = "vpc"
+  
+  tags = {
+    Name = "${var.instance_name}-eip"
+  }
+}
+
 # EC2 Instance
 resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.amazon_linux_2023.id
@@ -83,6 +92,12 @@ resource "aws_instance" "bastion" {
   tags = {
     Name = var.instance_name
   }
+}
+
+# Associate Elastic IP with Bastion Instance
+resource "aws_eip_association" "bastion" {
+  instance_id   = aws_instance.bastion.id
+  allocation_id = aws_eip.bastion.id
 }
 
 # Data source for Amazon Linux 2023 AMI

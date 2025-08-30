@@ -8,16 +8,6 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "bastion_security_group_id" {
-  description = "Bastion security group ID"
-  type        = string
-}
-
-variable "eks_security_group_id" {
-  description = "EKS security group ID"
-  type        = string
-}
-
 variable "cluster_name" {
   description = "RDS cluster name"
   type        = string

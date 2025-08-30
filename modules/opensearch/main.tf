@@ -16,8 +16,6 @@ resource "aws_opensearch_domain" "main" {
     }
   }
 
-  # Note: VPC options removed for public access
-
   ebs_options {
     ebs_enabled = true
     volume_size = 20
@@ -62,4 +60,36 @@ resource "aws_opensearch_domain" "main" {
   tags = {
     Name = var.domain_name
   }
+
+  timeouts {
+    create = "30m"
+    update = "30m"
+    delete = "30m"
+  }
+}
+
+# OpenSearch Access Policy - Allow access from anywhere
+resource "aws_opensearch_domain_policy" "main" {
+  domain_name = aws_opensearch_domain.main.domain_name
+
+  access_policies = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "*"
+        }
+        Action = [
+          "es:*"
+        ]
+        Resource = "${aws_opensearch_domain.main.arn}/*"
+        Condition = {
+          IpAddress = {
+            "aws:SourceIp" = ["0.0.0.0/0"]
+          }
+        }
+      }
+    ]
+  })
 }

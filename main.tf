@@ -10,6 +10,14 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.0"
+    }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
   }
 }
 
@@ -27,6 +35,27 @@ provider "aws" {
 
   default_tags {
     tags = local.common_tags
+  }
+}
+data "aws_eks_cluster_auth" "main" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+  token                  = data.aws_eks_cluster_auth.main.token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_ca)
+    exec {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    }
   }
 }
 
@@ -174,8 +203,6 @@ module "rds" {
 
   vpc_id = module.app_vpc.vpc_id
   subnet_ids = module.app_vpc.db_subnet_ids
-  bastion_security_group_id = module.bastion.security_group_id
-  eks_security_group_id = module.eks.cluster_security_group_id
   
   cluster_name = "skills-db-cluster"
   db_name      = "day1"

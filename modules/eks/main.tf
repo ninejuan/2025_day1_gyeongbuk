@@ -1,3 +1,7 @@
+locals {
+  amazon_cloudwatch_observability_config = file("${path.module}/configs/container_insights.json")
+}
+
 # EKS Cluster
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
@@ -31,30 +35,7 @@ resource "aws_eks_cluster" "main" {
 }
 
 # Container Insights Addon
-resource "aws_eks_addon" "container_insights" {
-  cluster_name = aws_eks_cluster.main.name
-  addon_name   = "amazon-cloudwatch-observability"
 
-  addon_version = "v1.0.0-eksbuild.1"
-
-  configuration_values = jsonencode({
-    "cloudWatchAgent" = {
-      "enabled" = true
-    }
-    "containerInsights" = {
-      "enabled" = true
-    }
-  })
-
-  depends_on = [
-    aws_eks_node_group.app,
-    aws_eks_node_group.addon
-  ]
-
-  tags = {
-    Name = "${var.cluster_name}-container-insights"
-  }
-}
 
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "eks_cluster" {
@@ -101,6 +82,13 @@ resource "aws_security_group" "eks_cluster" {
   name_prefix = "${var.cluster_name}-cluster-sg"
   vpc_id      = var.vpc_id
 
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -119,10 +107,10 @@ resource "aws_security_group" "eks_node_group" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_cluster.id]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -170,6 +158,8 @@ resource "aws_iam_role_policy_attachment" "ec2_container_registry_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.eks_node_group.name
 }
+
+
 
 # Application Node Group
 resource "aws_eks_node_group" "app" {
@@ -282,6 +272,9 @@ resource "aws_iam_role_policy_attachment" "eks_fargate_pod_execution_role_policy
   role       = aws_iam_role.eks_fargate_profile.name
 }
 
+# Data source for current region
+data "aws_region" "current" {}
+
 # Data source for EKS optimized AMI
 data "aws_ami" "eks_optimized" {
   most_recent = true
@@ -291,4 +284,111 @@ data "aws_ami" "eks_optimized" {
     name   = "name"
     values = ["amazon-eks-node-${var.cluster_version}-v*"]
   }
+}
+resource "aws_eks_addon" "container_insights" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "amazon-cloudwatch-observability"
+
+  configuration_values = local.amazon_cloudwatch_observability_config
+
+  depends_on = [
+    aws_eks_node_group.app,
+    aws_eks_node_group.addon
+  ]
+
+  tags = {
+    Name = "${var.cluster_name}-container-insights"
+  }
+}
+
+resource "kubernetes_namespace" "cloudwatch" {
+  metadata {
+    name = "amazon-cloudwatch"
+  }
+}
+
+resource "aws_iam_role" "fluent_bit" {
+  name = "${var.cluster_name}-fluentbit-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(aws_iam_openid_connect_provider.eks.url, "https://", "")}:sub" = "system:serviceaccount:amazon-cloudwatch:fluent-bit"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fluent_bit_cw_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  role       = aws_iam_role.fluent_bit.name
+}
+
+resource "aws_iam_role_policy_attachment" "fluent_bit_logs_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+  role       = aws_iam_role.fluent_bit.name
+}
+
+resource "kubernetes_service_account" "fluent_bit" {
+  metadata {
+    name      = "fluent-bit"
+    namespace = kubernetes_namespace.cloudwatch.metadata[0].name
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.fluent_bit.arn
+    }
+  }
+}
+
+resource "helm_release" "cloudwatch_agent" {
+  name       = "cloudwatch-agent"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-cloudwatch-metrics"
+  namespace  = kubernetes_namespace.cloudwatch.metadata[0].name
+
+  set {
+    name  = "clusterName"
+    value = aws_eks_cluster.main.name
+  }
+
+  depends_on = [kubernetes_namespace.cloudwatch]
+}
+
+resource "helm_release" "fluent_bit" {
+  name       = "fluent-bit"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-for-fluent-bit"
+  namespace  = kubernetes_namespace.cloudwatch.metadata[0].name
+
+  set {
+    name  = "serviceAccount.create"
+    value = "false"
+  }
+
+  set {
+    name  = "serviceAccount.name"
+    value = kubernetes_service_account.fluent_bit.metadata[0].name
+  }
+
+  depends_on = [
+    kubernetes_service_account.fluent_bit,
+    helm_release.cloudwatch_agent
+  ]
+}
+
+data "tls_certificate" "eks" {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource "aws_iam_openid_connect_provider" "eks" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
 }

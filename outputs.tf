@@ -12,12 +12,12 @@ output "app_vpc_id" {
 # Bastion Outputs
 output "bastion_public_ip" {
   description = "Bastion server public IP"
-  value       = module.bastion.public_ip
+  value       = module.bastion.bastion_public_ip
 }
 
 output "bastion_ssh_command" {
   description = "SSH command to connect to bastion"
-  value       = "ssh -p 2025 -i ~/.ssh/skills-bastion-key.pem ec2-user@${module.bastion.public_ip}"
+  value       = "ssh -p 2025 -i modules/bastion/ssh/skills-bastion-key ec2-user@${module.bastion.bastion_public_ip}"
 }
 
 # RDS Outputs
@@ -61,7 +61,18 @@ output "opensearch_domain_endpoint" {
 
 output "opensearch_dashboard_url" {
   description = "OpenSearch dashboard URL"
-  value       = "https://${module.opensearch.domain_endpoint}/_dashboards/"
+  value       = module.opensearch.dashboard_url
+}
+
+output "opensearch_username" {
+  description = "OpenSearch master username"
+  value       = module.opensearch.master_username
+}
+
+output "opensearch_password" {
+  description = "OpenSearch master password"
+  value       = module.opensearch.master_password
+  sensitive   = true
 }
 
 # S3 Outputs

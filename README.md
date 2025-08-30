@@ -7,7 +7,7 @@
 ### TAA 이후
 - [ ] Firewall Routing 세팅 (세팅1참고)
 - [ ] EKS Cluster 접근은 private으로 전환. no public.
-- [ ] Bastion에 EIP 주고 repo 넣은 후, 내부 파일들 과제지 지시대로 배치
+- [ ] Bastion에 repo 넣은 후, 내부 파일들 과제지 지시대로 배치
 - [ ] EKS에 Fluentd, ArgoCD 적용
 - [ ] Image들 **v1.0.0** 태그로 ECR Push
 - [ ] Github에 values push, s3에 app chart 업로드
