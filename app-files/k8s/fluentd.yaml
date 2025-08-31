@@ -17,7 +17,7 @@ spec:
       serviceAccountName: fluentd-sa
       containers:
         - name: fluentd
-          image: fluent/fluentd:v1.16-debian-1
+          image: fluent/fluentd-kubernetes-daemonset:v1-debian-elasticsearch
           env:
             - name: OPENSEARCH_HOST
               value: "skills-opensearch"

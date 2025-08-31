@@ -1,6 +1,6 @@
 type: application
 apiVersion: v2
 name: app
-description: WorldSkills 2025 Green/Red Application with Argo Rollouts and Fluent Bit
+description: WorldSkills Korea 2025 Green/Red Application with Argo Rollouts and Fluent Bit
 version: 1.0.0
 appVersion: "1.0.0"

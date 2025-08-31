@@ -1,17 +1,22 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: red
+  name: green
   namespace: argocd
 spec:
   project: default
   sources:
     - chart: app
-      repoURL: s3://skills-chart-bucket-sija/app
+      repoURL: https://24sunrin015.github.io/asdf/
       targetRevision: 1.0.0
       helm:
         valueFiles:
-          - https://raw.githubusercontent.com/24sunrin015/day1-values/main/red.values.yaml
+          - https://raw.githubusercontent.com/24sunrin015/day1-values/main/green.values.yaml
+        parameters:
+          - name: image.repository
+            value: 156041424727.dkr.ecr.ap-northeast-2.amazonaws.com/skills-green-repo
+          - name: ingress.host
+            value: asdf.asdf
   destination:
     server: https://kubernetes.default.svc
     namespace: skills

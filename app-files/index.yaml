@@ -1,0 +1,16 @@
+apiVersion: v1
+entries:
+  app:
+    - apiVersion: v2
+      appVersion: 1.0.0
+      created: "2025-08-31T16:40:23.849975+09:00"
+      description:
+        WorldSkills Korea 2025 Green/Red Application with Argo Rollouts and
+        Fluent Bit
+      digest: 74a6b9c1b4d7641217b7a009af63da9b9605ab61303b8881ddb8217bc47e6cb8
+      name: app
+      type: application
+      urls:
+        - https://raw.githubusercontent.com/24sunrin015/asdf/refs/heads/main/app-1.0.0.tgz
+      version: 1.0.0
+generated: "2025-08-31T16:40:23.849426+09:00"

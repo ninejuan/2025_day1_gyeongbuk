@@ -8,7 +8,9 @@
 - [ ] Firewall Routing 세팅 (세팅1참고)
 - [ ] EKS Cluster 접근은 private으로 전환. no public.
 - [ ] Bastion에 repo 넣은 후, 내부 파일들 과제지 지시대로 배치
-- [ ] EKS에 Fluentd, ArgoCD 적용
+- [ ] Helm package 후, s3 업로드. 그리고 index 생성 (세팅2참고)
+- [ ] EKS에 Fluentd, ArgoCD, ALB Ingress Controller 적용
+- [ ] opensearch-create-examplelog.sh 실행 및 Index Pattern 생성
 - [ ] Image들 **v1.0.0** 태그로 ECR Push
 - [ ] Github에 values push, s3에 app chart 업로드
 - [ ] Argo App 실행
@@ -35,7 +37,13 @@
    - (firewall-rtb) 0.0.0.0/0 - igw conn
    - (pub-rtb 2개 모두) 0.0.0.0/0을 AZ에 맞는 firewall vpce와 연동.
 
-### (세팅2) Helm chart index 생성
+### (세팅2) Helm chart Config
+Helm 패키징
+```sh
+helm package app/
+```
+
+Index 생성
 ```sh
 helm repo index . --url s3://skills-chart-bucket-<4words>/app
 aws s3 cp index.yaml s3://skills-chart-bucket-<4words>/app/

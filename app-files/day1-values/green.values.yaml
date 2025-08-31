@@ -1,9 +1,9 @@
 replicaCount: 2
 image:
-  repository: <yourid>.dkr.ecr.ap-northeast-2.amazonaws.com/skills-green-repo
+  repository: 156041424727.dkr.ecr.ap-northeast-2.amazonaws.com/skills-green-repo
   tag: v1.0.0
 service:
   type: ClusterIP
-  port: 80
+  port: 8080
 rollout:
   strategy: blueGreen

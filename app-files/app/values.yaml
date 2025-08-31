@@ -4,11 +4,9 @@ image:
   tag: "v1.0.0"
 service:
   type: ClusterIP
-  port: 80
+  port: 8080
 ingress:
   enabled: true
-  host: ""
-  certificateArn: ""
   groupName: "default"
 fluentbit:
   enabled: true

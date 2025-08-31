@@ -6,22 +6,18 @@ metadata:
 spec:
   project: default
   sources:
+    # - chart: app
+    #   repoURL: s3://skills-chart-bucket-sija/app
+    #   targetRevision: 1.0.0
+    #   helm:
+    #     valueFiles:
+    #       - https://gist.githubusercontent.com/24sunrin015/bba0fba069fa4553e5d724a24268f406/raw/4b2de8a6a35c31cc0f61ead946319f46af1dd886/dummy.yaml
     - chart: app
-      repoURL: s3://skills-chart-bucket-sija/app
+      repoURL: https://github.com/24sunrin015/asdf/raw/refs/heads/main/
       targetRevision: 1.0.0
       helm:
         valueFiles:
           - https://raw.githubusercontent.com/24sunrin015/day1-values/main/green.values.yaml
-        values: |
-          enabled: false
-    - chart: app
-      repoURL: http://d3i78ralfqrabu.cloudfront.net/app
-      targetRevision: 1.0.0
-      helm:
-        valueFiles:
-          - https://raw.githubusercontent.com/24sunrin015/day1-values/main/green.values.yaml
-        values: |
-          enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: skills

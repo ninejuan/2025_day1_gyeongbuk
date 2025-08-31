@@ -347,6 +347,17 @@ resource "kubernetes_service_account" "fluent_bit" {
   }
 }
 
+# Fluent SA Service Account
+resource "kubernetes_service_account" "fluent_sa" {
+  metadata {
+    name      = "fluentd-sa"
+    namespace = kubernetes_namespace.cloudwatch.metadata[0].name
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.fluent_bit.arn
+    }
+  }
+}
+
 resource "helm_release" "cloudwatch_agent" {
   name       = "cloudwatch-agent"
   repository = "https://aws.github.io/eks-charts"
