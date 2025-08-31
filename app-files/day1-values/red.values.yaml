@@ -4,6 +4,6 @@ image:
   tag: v1.0.0
 service:
   type: ClusterIP
-  port: 80
+  port: 8080
 rollout:
   strategy: blueGreen
