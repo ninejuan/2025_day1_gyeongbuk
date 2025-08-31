@@ -34,15 +34,3 @@ spec:
                 secretKeyRef:
                   name: skills-secrets
                   key: DB_URL
-      {{- if .Values.fluentbit.enabled }}
-        - name: fluent-bit
-          image: "{{ .Values.fluentbit.image }}"
-          ports:
-            - containerPort: {{ .Values.fluentbit.port }}
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log/app
-      {{- end }}
-      volumes:
-        - name: varlog
-          emptyDir: {}

@@ -49,6 +49,9 @@ helm repo index . --url s3://skills-chart-bucket-<4words>/app
 aws s3 cp index.yaml s3://skills-chart-bucket-<4words>/app/
 ```
 
+### (세팅3) 죽어도 CW Container Insights 활성화하기 힘들다면?
+그럴 때는 achimchan 계정 dummyeks 레포 eks.yaml eksctl로 생성하면 됨.
+
 ## 🏗️ 아키텍처 구성
 
 ### 3. VPC 구성
