@@ -12,16 +12,6 @@ spec:
       helm:
         valueFiles:
           - https://raw.githubusercontent.com/24sunrin015/day1-values/main/green.values.yaml
-        values: |
-          enabled: false
-    - chart: app
-      repoURL: http://d3i78ralfqrabu.cloudfront.net/app
-      targetRevision: 1.0.0
-      helm:
-        valueFiles:
-          - https://raw.githubusercontent.com/24sunrin015/day1-values/main/green.values.yaml
-        values: |
-          enabled: true
   destination:
     server: https://kubernetes.default.svc
     namespace: skills

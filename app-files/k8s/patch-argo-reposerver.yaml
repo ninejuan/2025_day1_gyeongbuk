@@ -1,0 +1,38 @@
+spec:
+  template:
+    spec:
+      volumes:
+        - name: helm-working-dir
+          emptyDir: {}
+      initContainers:
+        - name: helm-aws-s3
+          image: alpine/helm:3.15.4
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          volumeMounts:
+            - name: helm-working-dir
+              mountPath: /helm-working-dir
+          env:
+            - name: HELM_CACHE_HOME
+              value: /helm-working-dir
+            - name: HELM_CONFIG_HOME
+              value: /helm-working-dir
+            - name: HELM_DATA_HOME
+              value: /helm-working-dir
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              apk --no-cache add curl;
+              helm plugin install https://github.com/hypnoglow/helm-s3.git --version 0.16.2;
+              rm -rf /helm-working-dir/plugins/https-github.com-hypnoglow-helm-s3.git;
+              helm repo add <repo-name> s3://<bucket-name>/;
+              helm repo update;
+      containers:
+        - name: argocd-repo-server
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: <your-access-key>
+            - name: AWS_SECRET_ACCESS_KEY
+              value: <your-secret-key>
+

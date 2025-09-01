@@ -7,13 +7,13 @@
 ### TAA 이후
 - [ ] Firewall Routing 세팅 (세팅1참고)
 - [ ] EKS Cluster 접근은 private으로 전환. no public.
+- [ ] Bastion에 argocli, gh, awscli 세팅
 - [ ] Bastion에 repo 넣은 후, 내부 파일들 과제지 지시대로 배치
-- [ ] Helm package 후, s3 업로드. 그리고 index 생성 (세팅2참고)
-- [ ] EKS에 Fluentd, ArgoCD, ALB Ingress Controller 적용
-- [ ] opensearch-create-examplelog.sh 실행 및 Index Pattern 생성
 - [ ] Image들 **v1.0.0** 태그로 ECR Push
-- [ ] Github에 values push, s3에 app chart 업로드
-- [ ] Argo App 실행
+- [ ] EKS에 Fluentd, ArgoCD, ALB Ingress Controller, Argo Repo Server 패치(세팅3참고) 적용
+- [ ] Helm package 후, s3 업로드. 그리고 index, secrets 생성 (세팅2참고)
+- [ ] Github에 values push하고, Argo App 배포.
+- [ ] opensearch-create-examplelog.sh 실행 및 Index Pattern 생성
 
 ### App 배포 전
 - [ ] helm chart의 version과 argo app의 target Revision이 일치하는지 확인.
@@ -37,19 +37,47 @@
    - (firewall-rtb) 0.0.0.0/0 - igw conn
    - (pub-rtb 2개 모두) 0.0.0.0/0을 AZ에 맞는 firewall vpce와 연동.
 
-### (세팅2) Helm chart Config
-Helm 패키징
+### (세팅2) Helm Tips
+Commands. 아래 s3a는 예시 repo name이므로 자유롭게 수정하셔도 됩니다.  
 ```sh
+# Helm packaging
 helm package app/
-```
 
-Index 생성
+# Install Helm-s3 plugin
+helm plugin install https://github.com/hypnoglow/helm-s3.git
+
+# Init S3 helm repo
+helm s3 init s3://<bucket-name>/app
+
+# Add helm repo (S3 protocol)
+helm repo add s3a s3://<bucket-name>/app
+
+# Pull s3a repo
+helm pull s3a/app --version "1.0.0"
+
+# Push helm chart to s3 repo
+helm s3 push app-1.0.0.tgz s3a # --force if u get err
+
+# Generate helm chart index
+helm repo index . --url s3://<bucket-name>/app
+aws s3 cp index.yaml s3://<bucket-name>/app
+
+# Regenerate helm chart index
+helm s3 reindex s3a
+```
+만약 Helm chart 업데이트 했는데 반영 안되면 App 리스트 페이지에서 Hard refresh 할 수 있음.
+
+### (세팅3) Argo Repo Server Patch 적용하기
 ```sh
-helm repo index . --url s3://skills-chart-bucket-<4words>/app
-aws s3 cp index.yaml s3://skills-chart-bucket-<4words>/app/
+cd app-files/k8s
+kubectl -n argocd patch deployment argocd-repo-server --patch-file patch-argo-reposerver.yaml
 ```
 
-### (세팅3) 죽어도 CW Container Insights 활성화하기 힘들다면?
+### (세팅4) OpenSearch 딸깍하기
+`opensearch-create-examplelog.sh` 한번 실행 후, OpenSearch에서 index pattern 생성하면 됨.  
+그러면 11번 모두 정답 나오게 됨.  
+
+### (세팅5) 죽어도 CW Container Insights 활성화하기 힘들다면?
 그럴 때는 achimchan 계정 dummyeks 레포 eks.yaml eksctl로 생성하면 됨.
 
 ## 🏗️ 아키텍처 구성
