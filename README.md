@@ -25,6 +25,7 @@
 - [ ] Bastion에서 ifconfig.me가 timeout 되는지 확인.
 - [ ] Bastion에 **EIP**를 줬는지 확인.
 - [ ] S3, ec2-user 디렉토리에 과제지에서 명시한 파일이 적절하게 위치해있는지 확인.
+- [ ] K8s pods에 app label이 잘 구성되어 있는지 확인.
 - [ ] ELB가 잘 구성되었는지 확인. 만약 이상하다면, 비상 ingress 사용해서 어떻게든 되게 만들어야 함.
 - [ ] OpenSearch index-pattern이 app-log이고, 템플릿대로 로그 수집하는지, health는 안 받아오는지 확인해야 함.
 - [ ] Container Insights가 정상인지 확인해야 함. -> CW에서 대시보드 확인.
