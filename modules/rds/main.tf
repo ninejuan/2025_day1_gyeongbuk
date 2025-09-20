@@ -47,7 +47,7 @@ resource "aws_rds_cluster" "main" {
   backup_retention_period = 7
   preferred_backup_window = "03:00-04:00"
   preferred_maintenance_window = "sun:04:00-sun:05:00"
-  backtrack_window = 14400  # 4 hours in seconds
+  backtrack_window = 14400
 
   enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
 

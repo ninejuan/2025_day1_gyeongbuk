@@ -108,14 +108,6 @@ ENDPOINT="https://${aws_opensearch_domain.main.endpoint}"
 AUTH_USER="${var.master_username}"
 AUTH_PASS="${var.master_password}"
 
-for i in $(seq 1 60); do
-  if curl -sk -u "$AUTH_USER:$AUTH_PASS" "$ENDPOINT/_cluster/health" >/dev/null 2>&1; then
-    break
-  fi
-  echo "Waiting for OpenSearch endpoint to become ready... ($i)" >&2
-  sleep 5
-done
-
 curl -sk -u "$AUTH_USER:$AUTH_PASS" -XPOST "$ENDPOINT/app-log/_doc" \
  -H "Content-Type: application/json" \
  -d '{
