@@ -67,7 +67,6 @@ locals {
   }
 }
 
-# Hub VPC Module
 module "hub_vpc" {
   source = "./modules/vpc"
 
@@ -90,7 +89,6 @@ module "hub_vpc" {
   project     = var.project
 }
 
-# Application VPC Module
 module "app_vpc" {
   source = "./modules/vpc"
 
@@ -118,7 +116,6 @@ module "app_vpc" {
   project     = var.project
 }
 
-# VPC Peering
 module "vpc_peering" {
   source = "./modules/vpc_peering"
 
@@ -144,7 +141,6 @@ module "vpc_peering" {
   project     = var.project
 }
 
-# Network Firewall
 module "network_firewall" {
   source = "./modules/network_firewall"
 
@@ -161,7 +157,6 @@ module "network_firewall" {
   project     = var.project
 }
 
-# Bastion Server
 module "bastion" {
   source = "./modules/bastion"
 
@@ -181,7 +176,6 @@ module "bastion" {
   project     = var.project
 }
 
-# # Secrets Manager
 # module "secrets" {
 #   source = "./modules/secrets"
 
@@ -197,7 +191,6 @@ module "bastion" {
 #   project     = var.project
 # }
 
-# RDS Aurora MySQL
 module "rds" {
   source = "./modules/rds"
 
@@ -216,7 +209,6 @@ module "rds" {
   project     = var.project
 }
 
-# S3 Bucket
 module "s3" {
   source = "./modules/s3"
 
@@ -226,7 +218,6 @@ module "s3" {
   project     = var.project
 }
 
-# ECR Repositories
 module "ecr" {
   source = "./modules/ecr"
 
@@ -237,9 +228,16 @@ module "ecr" {
   
   environment = var.environment
   project     = var.project
+  aws_region  = var.aws_region
+
+  build_contexts = {
+    "skills-green-repo" = "${path.root}/app-files/docker/1.0.0/green"
+    "skills-red-repo"   = "${path.root}/app-files/docker/1.0.0/red"
+  }
+
+  image_tag = "v1.0.0"
 }
 
-# VPC Endpoints for App VPC
 module "vpc_endpoints" {
   source = "./modules/vpc_endpoints"
 
@@ -251,7 +249,6 @@ module "vpc_endpoints" {
   depends_on = [module.eks]
 }
 
-# EKS Cluster
 module "eks" {
   source = "./modules/eks"
 
@@ -279,7 +276,6 @@ module "eks" {
 
 
 
-# Load Balancers
 module "load_balancers" {
   source = "./modules/load_balancers"
 
@@ -295,7 +291,6 @@ module "load_balancers" {
   depends_on = [module.eks, module.vpc_endpoints]
 }
 
-# OpenSearch
 module "opensearch" {
   source = "./modules/opensearch"
 
@@ -315,7 +310,6 @@ module "opensearch" {
   project     = var.project
 }
 
-# Monitoring
 module "monitoring" {
   source = "./modules/monitoring"
 

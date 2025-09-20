@@ -1,4 +1,3 @@
-# OpenSearch Domain
 resource "aws_opensearch_domain" "main" {
   domain_name    = var.domain_name
   engine_version = var.engine_version
@@ -68,7 +67,6 @@ resource "aws_opensearch_domain" "main" {
   }
 }
 
-# OpenSearch Access Policy - Allow access from anywhere
 resource "aws_opensearch_domain_policy" "main" {
   domain_name = aws_opensearch_domain.main.domain_name
 
@@ -92,4 +90,45 @@ resource "aws_opensearch_domain_policy" "main" {
       }
     ]
   })
+}
+
+resource "null_resource" "seed_example_log" {
+  triggers = {
+    endpoint     = aws_opensearch_domain.main.endpoint
+    username     = var.master_username
+    password_sha = sha1(var.master_password)
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+set -euo pipefail
+
+ENDPOINT="https://${aws_opensearch_domain.main.endpoint}"
+AUTH_USER="${var.master_username}"
+AUTH_PASS="${var.master_password}"
+
+for i in $(seq 1 60); do
+  if curl -sk -u "$AUTH_USER:$AUTH_PASS" "$ENDPOINT/_cluster/health" >/dev/null 2>&1; then
+    break
+  fi
+  echo "Waiting for OpenSearch endpoint to become ready... ($i)" >&2
+  sleep 5
+done
+
+curl -sk -u "$AUTH_USER:$AUTH_PASS" -XPOST "$ENDPOINT/app-log/_doc" \
+ -H "Content-Type: application/json" \
+ -d '{
+  "date": "2025/09/21",
+  "time": "11:01:30",
+  "timestamp": "2025-09-21T11:01:30Z",
+  "method": "GET",
+  "path": "/green",
+  "ip": "192.168.2.221",
+  "port": "43422"
+}'
+EOT
+  }
+
+  depends_on = [aws_opensearch_domain.main]
 }
